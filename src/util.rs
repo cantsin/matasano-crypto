@@ -6,6 +6,10 @@ pub const BASE64_ALPHABET: &'static str = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijk
 pub fn printable(v: &Vec<u8>, radix: u32) -> String {
     let mut s = String::new();
 
+    if v.len() == 0 {
+        return s;
+    }
+
     assert!(radix==16 || radix==64);
     let lookup = match radix {
         16 => HEX_ALPHABET,
@@ -72,6 +76,15 @@ pub fn raw_to_base64(v: &Vec<u8>) -> Vec<u8> {
         let s3 = ((elem[1] & 0x0f) << 2) | ((elem[2] & 0xc0) >> 6);
         let s4 = elem[2] & 0x3f;
         result.append(&mut vec![s1, s2, s3, s4]);
+    }
+    return result;
+}
+
+pub fn xor(v1: &Vec<u8>, v2: &Vec<u8>) -> Vec<u8> {
+    let mut result = Vec::new();
+    assert!(v1.len() == v2.len());
+    for i in 0..v1.len() {
+        result.push(v1[i] ^ v2[i]);
     }
     return result;
 }

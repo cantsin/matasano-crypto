@@ -1,7 +1,7 @@
 
 use quickcheck::{quickcheck, Gen, Arbitrary};
 
-use util::{hex_to_raw, raw_to_base64, printable, HEX_ALPHABET};
+use util::{hex_to_raw, raw_to_base64, xor, printable, HEX_ALPHABET};
 
 #[test]
 fn challenge_1() {
@@ -9,6 +9,14 @@ fn challenge_1() {
     let input = "49276d206b696c6c696e6720796f757220627261696e206c696b65206120706f69736f6e6f7573206d757368726f6f6d";
     let result = printable(&raw_to_base64(&hex_to_raw(input)), 64);
     assert!(result == "SSdtIGtpbGxpbmcgeW91ciBicmFpbiBsaWtlIGEgcG9pc29ub3VzIG11c2hyb29t");
+}
+
+#[test]
+fn challenge_2() {
+    let x = hex_to_raw("1c0111001f010100061a024b53535009181c");
+    let y = hex_to_raw("686974207468652062756c6c277320657965");
+    let result = printable(&xor(&x, &y), 16);
+    assert!(result == "746865206B696420646F6E277420706C6179");
 }
 
 #[derive(Clone, Debug)]
