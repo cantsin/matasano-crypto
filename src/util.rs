@@ -1,14 +1,15 @@
 #![allow(dead_code)]
 
+pub const HEX_ALPHABET: &'static str = "0123456789ABCDEF";
+pub const BASE64_ALPHABET: &'static str = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+
 pub fn printable(v: &Vec<u8>, radix: u32) -> String {
     let mut s = String::new();
-    const LOOKUP16: &'static str = "0123456789ABCDEF";
-    const LOOKUP64: &'static str = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
 
     assert!(radix==16 || radix==64);
     let lookup = match radix {
-        16 => LOOKUP16,
-        64 => LOOKUP64,
+        16 => HEX_ALPHABET,
+        64 => BASE64_ALPHABET,
         _ => panic!("unreachable")
     };
 
@@ -19,8 +20,25 @@ pub fn printable(v: &Vec<u8>, radix: u32) -> String {
             v.push(lookup.char_at((x % radix) as usize));
             x /= radix;
         }
+
+        // pad out hexcodes
+        if radix == 16 {
+            let original = elem as u32;
+            if original < radix {
+                v.push('0');
+            }
+            if original == 0 {
+                v.push('0');
+            }
+        }
+
         let result = v.chars().rev().collect::<String>();
         s.push_str(result.as_str());
+    }
+
+    // strip leading '0' if extant
+    if s.char_at(0) == '0' {
+        return s[1..].to_string();
     }
     return s.clone();
 }
@@ -32,7 +50,12 @@ fn hex_to_int(c: char) -> u32 {
 
 pub fn hex_to_raw(s: &str) -> Vec<u8> {
     let mut result = Vec::new();
-    for elem in s.as_bytes().chunks(2) {
+    let hex = if (s.len() % 2) == 1 {
+        format!("0{}", s)
+    } else {
+        s.to_string()
+    };
+    for elem in hex.as_bytes().chunks(2) {
         let first = elem[0];
         let second = elem[1];
         let n = 16 * hex_to_int(first as char) + hex_to_int(second as char);
