@@ -168,3 +168,21 @@ pub fn english_probability(s: &str) -> i64 {
 // 'x', 0.150
 // 'y', 1.974
 // 'z', 0.074
+
+pub fn hamming(s1: &str, s2: &str) -> usize {
+    assert!(s1.len() == s2.len());
+    let x1 = ascii_to_raw(s1);
+    let x2 = ascii_to_raw(s2);
+    let result = xor(&x1, &x2);
+    result.iter().fold(0, |accum, &x| {
+        let mut n = 0;
+        let mut elem = x;
+        while elem > 0 {
+            if (elem & 1) == 1 {
+                n += 1;
+            }
+            elem >>= 1;
+        }
+        accum + n
+    })
+}
