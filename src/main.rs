@@ -1,5 +1,4 @@
 #![feature(str_char)]
-#![feature(convert)]
 #![allow(dead_code)]
 #![allow(unused_imports)]
 
