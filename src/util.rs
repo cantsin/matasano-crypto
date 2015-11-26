@@ -2,6 +2,7 @@
 
 use std::*;
 
+pub const ALPHABET: &'static str = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
 pub const HEX_ALPHABET: &'static str = "0123456789ABCDEF";
 pub const BASE64_ALPHABET: &'static str = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
 
@@ -56,6 +57,14 @@ fn hex_to_int(c: char) -> u32 {
     c.to_digit(16).unwrap()
 }
 
+pub fn ascii_single_keys() -> Vec<u8> {
+    ALPHABET.chars().map(|c| c as u8).collect()
+}
+
+pub fn raw_to_ascii(v: &Vec<u8>) -> String {
+    v.iter().map(|&x| x as char).collect()
+}
+
 pub fn hex_to_raw(s: &str) -> Vec<u8> {
     let padded = if (s.len() % 2) == 1 {
         format!("0{}", s)
@@ -92,4 +101,18 @@ pub fn xor_key(v: &Vec<u8>, key: &str) -> Vec<u8> {
     let k: String = iter::repeat(key).take(v.len()).collect();
     let v2 = k.chars().map(|x: char| x as u8).collect();
     xor(v, &v2)
+}
+
+pub fn is_printable(c: char) -> bool {
+    let v = c as u8;
+    v >= 32 && v < 127
+}
+
+pub fn english_probability(s: &str) -> i64 {
+    let mut p = 0;
+    let result: String = s.chars().filter(|&c| is_printable(c)).collect();
+    p -= (result.len() as i64) * 10;
+    print!("{:?} has result {}\n", s, p);
+
+    p
 }

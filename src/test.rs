@@ -1,11 +1,14 @@
 
 use quickcheck::{quickcheck, Gen, Arbitrary};
+use std::io::prelude::*;
+use std::fs::File;
+use std::cmp::Ordering;
+use std::collections::BTreeMap;
 
 use util::*;
 
 #[test]
 fn challenge_1() {
-    // http://cryptopals.com/sets/1/challenges/1/
     let input = "49276d206b696c6c696e6720796f757220627261696e206c696b65206120706f69736f6e6f7573206d757368726f6f6d";
     let result = printable64(&raw_to_base64(&hex_to_raw(input)));
     assert!(result == "SSdtIGtpbGxpbmcgeW91ciBicmFpbiBsaWtlIGEgcG9pc29ub3VzIG11c2hyb29t");
@@ -19,46 +22,51 @@ fn challenge_2() {
     assert!(result == "746865206B696420646F6E277420706C6179");
 }
 
-//#[test]
+#[test]
 fn challenge_3() {
     let encrypted = "1b37373331363f78151b7f2b783431333d78397828372d363c78373e783a393b3736";
     let v = hex_to_raw(encrypted);
+    let keys = ascii_single_keys();
+    let mut map = BTreeMap::new();
 
-    fn as_ascii(v: &Vec<u8>) -> String {
-        v.iter().map(|&x| x as char).collect()
+    for i in keys {
+        let result = raw_to_ascii(&xor_one(&v, i as u8));
+        let p = english_probability(&result);
+        map.insert(p, result.clone());
     }
 
-    for i in b'A'..b'Z' + 1 {
-        print!("{}\n", as_ascii(&xor_one(&v, i as u8)));
-    }
-    assert!(false);
+    let best_match = map.iter().next().unwrap();
+    print!("result: {:?}", best_match);
+    assert!(&best_match.1[..] == "Cooking MC's like a pound of bacon");
 }
 
-//#[test]
+#[test]
 fn challenge_4() {
-    // open file
-    // get all strings
-    // for each string
-    //  test with xor_one
+    let mut f = File::open("data/4.txt").unwrap();
+    let mut s = String::new();
+    let _ = f.read_to_string(&mut s);
+    let keys = ascii_single_keys();
+    let mut map = BTreeMap::new();
 
-    let encrypted = "1b37373331363f78151b7f2b783431333d78397828372d363c78373e783a393b3736";
-    let v = hex_to_raw(encrypted);
-
-    fn as_ascii(v: &Vec<u8>) -> String {
-        v.iter().map(|&x| x as char).collect()
+    for line in s.split('\n') {
+        let v = hex_to_raw(&line);
+        for i in keys.clone() {
+            let result = raw_to_ascii(&xor_one(&v, i as u8));
+            let p = english_probability(&result);
+            map.insert(p, result.clone());
+        }
     }
 
-    for i in b'A'..b'Z' + 1 {
-        print!("{}\n", as_ascii(&xor_one(&v, i as u8)));
-    }
+    let best_match = map.iter().next().unwrap();
+    print!("best_match: {}", best_match.1);
     assert!(false);
 }
 
 //#[test]
 fn challenge_5() {
-    let original = "Burning 'em, if you ain't quick and nimble
-I go crazy when I hear a cymbal";
-    let key = "ICE";
+//     let original = "Burning 'em, if you ain't quick and nimble
+// I go crazy when I hear a cymbal";
+//     let key = "ICE";
 
 //     assert!(encrypted == "0b3637272a2b2e63622c2e69692a23693a2a3c6324202d623d63343c2a26226324272765272
 // a282b2f20430a652e2c652a3124333a653e2b2027630c692b20283165286326302e27282f")
