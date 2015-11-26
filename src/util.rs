@@ -66,6 +66,10 @@ pub fn raw_to_ascii(v: &Vec<u8>) -> String {
     v.iter().map(|&x| x as char).collect()
 }
 
+pub fn ascii_to_raw(s: &str) -> Vec<u8> {
+    s.chars().map(|c| c as u8).collect()
+}
+
 pub fn hex_to_raw(s: &str) -> Vec<u8> {
     let padded = if (s.len() % 2) == 1 {
         format!("0{}", s)
