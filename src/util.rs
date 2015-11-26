@@ -1,5 +1,7 @@
 #![allow(dead_code)]
 
+use std::*;
+
 pub const HEX_ALPHABET: &'static str = "0123456789ABCDEF";
 pub const BASE64_ALPHABET: &'static str = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
 
@@ -81,14 +83,15 @@ pub fn raw_to_base64(v: &Vec<u8>) -> Vec<u8> {
 }
 
 pub fn xor(v1: &Vec<u8>, v2: &Vec<u8>) -> Vec<u8> {
-    let mut result = Vec::new();
-    assert!(v1.len() == v2.len());
-    for i in 0..v1.len() {
-        result.push(v1[i] ^ v2[i]);
-    }
-    return result;
+    v1.iter().zip(v2).map(|(x, y)| x ^ y).collect()
 }
 
 pub fn xor_one(v: &Vec<u8>, val: u8) -> Vec<u8> {
     v.iter().map(|x| x ^ val).collect()
+}
+
+pub fn xor_key(v: &Vec<u8>, key: &str) -> Vec<u8> {
+    let k: String = iter::repeat(key).take(v.len()).collect();
+    let v2 = k.chars().map(|x: char| x as u8).collect();
+    xor(v, &v2)
 }

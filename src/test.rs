@@ -34,6 +34,36 @@ fn challenge_3() {
     assert!(false);
 }
 
+#[test]
+fn challenge_4() {
+    // open file
+    // get all strings
+    // for each string
+    //  test with xor_one
+
+    let encrypted = "1b37373331363f78151b7f2b783431333d78397828372d363c78373e783a393b3736";
+    let v = hex_to_raw(encrypted);
+
+    fn as_ascii(v: &Vec<u8>) -> String {
+        v.iter().map(|&x| x as char).collect()
+    }
+
+    for i in b'A'..b'Z' + 1 {
+        print!("{}\n", as_ascii(&xor_one(&v, i as u8)));
+    }
+    assert!(false);
+}
+
+#[test]
+fn challenge_5() {
+    let original = "Burning 'em, if you ain't quick and nimble
+I go crazy when I hear a cymbal";
+    let key = "ICE";
+
+//     assert!(encrypted == "0b3637272a2b2e63622c2e69692a23693a2a3c6324202d623d63343c2a26226324272765272
+// a282b2f20430a652e2c652a3124333a653e2b2027630c692b20283165286326302e27282f")
+}
+
 #[derive(Clone, Debug)]
 struct Text {
     value: String
