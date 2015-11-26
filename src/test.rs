@@ -19,7 +19,7 @@ fn challenge_2() {
     assert!(result == "746865206B696420646F6E277420706C6179");
 }
 
-#[test]
+//#[test]
 fn challenge_3() {
     let encrypted = "1b37373331363f78151b7f2b783431333d78397828372d363c78373e783a393b3736";
     let v = hex_to_raw(encrypted);
@@ -34,7 +34,7 @@ fn challenge_3() {
     assert!(false);
 }
 
-#[test]
+//#[test]
 fn challenge_4() {
     // open file
     // get all strings
@@ -54,7 +54,7 @@ fn challenge_4() {
     assert!(false);
 }
 
-#[test]
+//#[test]
 fn challenge_5() {
     let original = "Burning 'em, if you ain't quick and nimble
 I go crazy when I hear a cymbal";
