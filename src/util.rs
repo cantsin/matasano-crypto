@@ -1,6 +1,7 @@
 #![allow(dead_code)]
 
 use std::*;
+use std::collections::{HashMap};
 
 pub const ALPHABET: &'static str = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
 pub const HEX_ALPHABET: &'static str = "0123456789ABCDEF";
@@ -108,11 +109,63 @@ pub fn is_printable(c: char) -> bool {
     v >= 32 && v < 127
 }
 
+fn test_against(map: &HashMap<char, usize>, length: usize, c: char, threshold: f64, weight: usize) -> i64 {
+    let n = length as f64;
+    if let Some(&occurence) = map.get(&c) {
+        let freq = (occurence as f64) / n;
+        if freq > threshold {
+            weight as i64
+        } else {
+            (weight as f64 * (freq / threshold)) as i64
+        }
+    }
+    else {
+        0
+    }
+}
+
 pub fn english_probability(s: &str) -> i64 {
     let mut p = 0;
     let result: String = s.chars().filter(|&c| is_printable(c)).collect();
-    p -= (result.len() as i64) * 10;
-    print!("{:?} has result {}\n", s, p);
-
+    p += (result.len() as i64) * 2;
+    let mut histogram = HashMap::new();
+    for c in s.chars() {
+        let counter = histogram.entry(c).or_insert(0);
+        *counter += 1;
+    }
+    let n = s.len();
+    p += test_against(&histogram, n, ' ', 0.10, 20);
+    p += test_against(&histogram, n, 'e', 0.12, 20);
+    p += test_against(&histogram, n, 't', 0.09, 18);
+    p += test_against(&histogram, n, 'a', 0.08, 15);
+    p += test_against(&histogram, n, 'o', 0.07, 12);
+    p += test_against(&histogram, n, 'i', 0.07, 10);
     p
 }
+
+// 'a', 8.167
+// 'b', 1.492
+// 'c', 2.782
+// 'd', 4.253
+// 'e', 12.702
+// 'f', 2.228
+// 'g', 2.015
+// 'h', 6.094
+// 'i', 6.966
+// 'j', 0.153
+// 'k', 0.772
+// 'l', 4.025
+// 'm', 2.406
+// 'n', 6.749
+// 'o', 7.507
+// 'p', 1.929
+// 'q', 0.095
+// 'r', 5.987
+// 's', 6.327
+// 't', 9.056
+// 'u', 2.758
+// 'v', 0.978
+// 'w', 2.361
+// 'x', 0.150
+// 'y', 1.974
+// 'z', 0.074

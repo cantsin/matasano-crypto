@@ -35,8 +35,7 @@ fn challenge_3() {
         map.insert(p, result.clone());
     }
 
-    let best_match = map.iter().next().unwrap();
-    print!("result: {:?}", best_match);
+    let best_match = map.iter().rev().next().unwrap();
     assert!(&best_match.1[..] == "Cooking MC's like a pound of bacon");
 }
 
@@ -57,9 +56,8 @@ fn challenge_4() {
         }
     }
 
-    let best_match = map.iter().next().unwrap();
-    print!("best_match: {}", best_match.1);
-    assert!(false);
+    let best_match = map.iter().rev().next().unwrap();
+    assert!(&best_match.1[..] == "Now that the party is jumping\n");
 }
 
 //#[test]
