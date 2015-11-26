@@ -186,3 +186,13 @@ pub fn hamming(s1: &str, s2: &str) -> usize {
         accum + n
     })
 }
+
+pub fn transpose(chunks: &Vec<Vec<u8>>) -> Vec<Vec<u8>> {
+    let mut vecs: Vec<Vec<u8>> = chunks.iter().map(|_| Vec::new()).collect();
+    for c1 in chunks.iter() {
+        for (j, &c2) in c1.iter().enumerate() {
+            vecs[j].push(c2);
+        }
+    }
+    vecs
+}

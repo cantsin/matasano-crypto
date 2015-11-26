@@ -26,6 +26,8 @@ fn challenge_2() {
 fn challenge_3() {
     let encrypted = "1b37373331363f78151b7f2b783431333d78397828372d363c78373e783a393b3736";
     let v = hex_to_raw(encrypted);
+
+    // TODO refactor
     let keys = ascii_single_keys();
     let mut map = BTreeMap::new();
 
@@ -36,6 +38,8 @@ fn challenge_3() {
     }
 
     let best_match = map.iter().rev().next().unwrap();
+
+
     assert!(&best_match.1[..] == "Cooking MC's like a pound of bacon");
 }
 
@@ -44,6 +48,8 @@ fn challenge_4() {
     let mut f = File::open("data/4.txt").unwrap();
     let mut s = String::new();
     let _ = f.read_to_string(&mut s);
+
+    // TODO refactor
     let keys = ascii_single_keys();
     let mut map = BTreeMap::new();
 
@@ -70,14 +76,60 @@ I go crazy when I hear a cymbal";
     let result = xor_key(&o, &key);
     let encrypted = printable16(&result);
 
-    print!("{:?}\n", encrypted);
-
     assert!(encrypted == "0B3637272A2B2E63622C2E69692A23693A2A3C6324202D623D63343C2A26226324272765272A282B2F20430A652E2C652A3124333A653E2B2027630C692B20283165286326302E27282F")
 }
 
 #[test]
 fn hamming_distance() {
     assert!(hamming("this is a test", "wokka wokka!!!") == 37);
+}
+
+#[test]
+fn transpose_matrix() {
+    let v: Vec<Vec<u8>> = vec![
+        vec![1,2,3,4],
+        vec![5,6,7,8],
+        vec![9,10,11,12],
+        vec![13,14,15,16]];
+    let v2 = transpose(&v);
+    assert!(v2 == vec![vec![1,5,9,13],
+                       vec![2,6,10,14],
+                       vec![3,7,11,15],
+                       vec![4,8,12,16]])
+}
+
+#[test]
+fn challenge_6() {
+    let mut f = File::open("data/6.txt").unwrap();
+    let mut s = String::new();
+    let _ = f.read_to_string(&mut s);
+    s = s.split('\n').flat_map(|x| x.chars()).collect();
+
+    // TODO: refactor into break-repeating-key-xor
+    // params: block, keysize range
+
+    let mut map = BTreeMap::new();
+
+    for keysize in 2..40 {
+        let first = &s[..keysize];
+        let second = &s[keysize..keysize*2];
+        let edit_dist = hamming(&first, &second);
+        let norm = (edit_dist as f64 / keysize as f64) * 100000.0;
+        map.insert(norm as usize, keysize);
+    }
+
+    print!("{:?}\n", map);
+
+    // try the smallest 2-3 keysizes
+    let keysizes: Vec<usize> = map.iter().take(3).map(|k| *k.1).collect();
+    for best_keysize in keysizes {
+        let chunks: Vec<Vec<u8>> = s.as_bytes().chunks(best_keysize).map(|c| {
+            c.iter().cloned().collect()
+        }).collect();
+        let t = transpose(&chunks);
+    }
+
+    assert!(false);
 }
 
 #[derive(Clone, Debug)]
