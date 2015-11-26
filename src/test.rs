@@ -1,7 +1,7 @@
 
 use quickcheck::{quickcheck, Gen, Arbitrary};
 
-use util::{hex_to_raw, raw_to_base64, xor, printable, HEX_ALPHABET};
+use util::*;
 
 #[test]
 fn challenge_1() {
@@ -17,6 +17,21 @@ fn challenge_2() {
     let y = hex_to_raw("686974207468652062756c6c277320657965");
     let result = printable(&xor(&x, &y), 16);
     assert!(result == "746865206B696420646F6E277420706C6179");
+}
+
+#[test]
+fn challenge_3() {
+    let encrypted = "1b37373331363f78151b7f2b783431333d78397828372d363c78373e783a393b3736";
+    let v = hex_to_raw(encrypted);
+
+    fn as_ascii(v: &Vec<u8>) -> String {
+        v.iter().map(|&x| x as char).collect()
+    }
+
+    for i in b'A'..b'Z' + 1 {
+        print!("{}\n", as_ascii(&xor_one(&v, i as u8)));
+    }
+    assert!(false);
 }
 
 #[derive(Clone, Debug)]

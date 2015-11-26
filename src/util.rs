@@ -49,7 +49,7 @@ pub fn printable(v: &Vec<u8>, radix: u32) -> String {
 
 fn hex_to_int(c: char) -> u32 {
     assert!(c.is_digit(16));
-    return c.to_digit(16).unwrap();
+    c.to_digit(16).unwrap()
 }
 
 pub fn hex_to_raw(s: &str) -> Vec<u8> {
@@ -87,4 +87,8 @@ pub fn xor(v1: &Vec<u8>, v2: &Vec<u8>) -> Vec<u8> {
         result.push(v1[i] ^ v2[i]);
     }
     return result;
+}
+
+pub fn xor_one(v: &Vec<u8>, val: u8) -> Vec<u8> {
+    v.iter().map(|x| x ^ val).collect()
 }
