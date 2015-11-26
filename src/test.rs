@@ -72,8 +72,7 @@ I go crazy when I hear a cymbal";
 
     print!("{:?}\n", encrypted);
 
-    assert!(encrypted == "0B3637272A2B2E63622C2E69692A23693A2A3C6324202D623D63343C2A26226324272765272
-A282B2F20430A652E2C652A3124333A653E2B2027630C692B20283165286326302E27282F")
+    assert!(encrypted == "0B3637272A2B2E63622C2E69692A23693A2A3C6324202D623D63343C2A26226324272765272A282B2F20430A652E2C652A3124333A653E2B2027630C692B20283165286326302E27282F")
 }
 
 #[derive(Clone, Debug)]
@@ -83,14 +82,10 @@ struct Text {
 
 impl Arbitrary for Text {
     fn arbitrary<G: Gen>(g: &mut G) -> Self {
-        let len = u16::arbitrary(g);
+        let mut len = u16::arbitrary(g);
         let mut s = String::with_capacity(len as usize);
-        // don't pick a leading zero
-        let i = usize::arbitrary(g);
-        let i = i % HEX_ALPHABET[1..].len();
-        s.push(HEX_ALPHABET[1..].as_bytes()[i] as char);
-
-        for _ in 1..len {
+        len += len % 2; // must be even
+        for _ in 0..len {
             let i = usize::arbitrary(g);
             let i = i % HEX_ALPHABET.len();
             s.push(HEX_ALPHABET.as_bytes()[i] as char);

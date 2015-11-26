@@ -45,12 +45,7 @@ pub fn printable16(v: &Vec<u8>) -> String {
 
         v.chars().rev().collect::<String>()
     }).collect();
-
-    // strip leading '0' if extant
-    if result.char_at(0) == '0' {
-        return result[1..].to_string();
-    }
-    return result.clone();
+    result
 }
 
 fn hex_to_int(c: char) -> u32 {
