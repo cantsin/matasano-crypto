@@ -108,25 +108,40 @@ fn challenge_6() {
     // TODO: refactor into break-repeating-key-xor
     // params: block, keysize range
 
-    let mut map = BTreeMap::new();
+    let mut edit_map = BTreeMap::new();
 
     for keysize in 2..40 {
         let first = &s[..keysize];
         let second = &s[keysize..keysize*2];
         let edit_dist = hamming(&first, &second);
         let norm = (edit_dist as f64 / keysize as f64) * 100000.0;
-        map.insert(norm as usize, keysize);
+        edit_map.insert(norm as usize, keysize);
     }
 
-    print!("{:?}\n", map);
+    print!("{:?}\n", edit_map);
+    let keys = ascii_single_keys();
 
     // try the smallest 2-3 keysizes
-    let keysizes: Vec<usize> = map.iter().take(3).map(|k| *k.1).collect();
+    let keysizes: Vec<usize> = edit_map.iter().take(3).map(|k| *k.1).collect();
     for best_keysize in keysizes {
         let chunks: Vec<Vec<u8>> = s.as_bytes().chunks(best_keysize).map(|c| {
             c.iter().cloned().collect()
         }).collect();
-        let t = transpose(&chunks);
+        let transposed = transpose(&chunks);
+        let mut block_key = vec![];
+
+        for block in transposed {
+            let mut map = BTreeMap::new();
+            for key in keys.clone() {
+                let result = raw_to_ascii(&xor_one(&block, key as u8));
+                let p = english_probability(&result);
+                map.insert(p, key);
+            }
+            let best_match = map.iter().rev().next().unwrap();
+            block_key.push(*best_match.1);
+        }
+        let s: String = block_key.iter().map(|&x| x as char).collect();
+        print!("{}\n", s);
     }
 
     assert!(false);
