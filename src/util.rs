@@ -2,6 +2,8 @@
 
 use std::{iter, ops};
 use std::collections::{HashMap, BTreeMap};
+use openssl::crypto::symm::{decrypt, Type};
+
 use conversion::*;
 
 pub fn xor(v1: &Vec<u8>, v2: &Vec<u8>) -> Vec<u8> {
@@ -191,4 +193,10 @@ pub fn break_repeating_key_xor(block: &Vec<u8>, lengths: &Vec<usize>) -> Vec<Str
     }
 
     solutions
+}
+
+pub fn decrypt_aes_ecb(v: &Vec<u8>, key: &str) -> String {
+    let k = string_to_raw(key);
+    let result = decrypt(Type::AES_128_ECB, &k[..], &[], &v[..]);
+    raw_to_string(&result)
 }

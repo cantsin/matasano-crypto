@@ -112,6 +112,19 @@ fn challenge_6() {
     assert!(&decrypted[..snippet.len()] == snippet);
 }
 
+#[test]
+fn challenge_7() {
+    let mut f = File::open("data/7.txt").unwrap();
+    let mut s = String::new();
+    let _ = f.read_to_string(&mut s);
+    let raw: String = s.split('\n').flat_map(|x| x.chars()).collect();
+    let Base64(block) = string_to_base64(&raw);
+
+    let result = decrypt_aes_ecb(&block, "YELLOW SUBMARINE");
+    let n = result.len();
+    assert!(&result[n-23..] == "Play that funky music \n");
+}
+
 #[derive(Clone, Debug)]
 struct Text {
     value: String

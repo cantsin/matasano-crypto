@@ -5,3 +5,4 @@ authors = ["James Tranovich <jtranovich@gmail.com>"]
 
 [dependencies]
 quickcheck = "0.2"
+openssl = "0.7.0"

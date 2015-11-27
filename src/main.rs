@@ -3,6 +3,7 @@
 #![allow(unused_imports)]
 
 extern crate quickcheck;
+extern crate openssl;
 
 mod util;
 mod conversion;
