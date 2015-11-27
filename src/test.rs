@@ -5,27 +5,29 @@ use std::fs::File;
 use std::cmp::Ordering;
 use std::collections::BTreeMap;
 
+use conversion::*;
 use util::*;
 
 #[test]
 fn challenge_1() {
     let input = "49276d206b696c6c696e6720796f757220627261696e206c696b65206120706f69736f6e6f7573206d757368726f6f6d";
-    let result = printable64(&raw_to_base64(&hex_to_raw(input)));
+    let Hex(v) = string_to_hex(input);
+    let result = base64_to_string(raw_to_base64(&v));
     assert!(result == "SSdtIGtpbGxpbmcgeW91ciBicmFpbiBsaWtlIGEgcG9pc29ub3VzIG11c2hyb29t");
 }
 
 #[test]
 fn challenge_2() {
-    let x = hex_to_raw("1c0111001f010100061a024b53535009181c");
-    let y = hex_to_raw("686974207468652062756c6c277320657965");
-    let result = printable16(&xor(&x, &y));
+    let Hex(x) = string_to_hex("1c0111001f010100061a024b53535009181c");
+    let Hex(y) = string_to_hex("686974207468652062756c6c277320657965");
+    let result = hex_to_string(Hex(xor(&x, &y)));
     assert!(result == "746865206B696420646F6E277420706C6179");
 }
 
 #[test]
 fn challenge_3() {
     let encrypted = "1b37373331363f78151b7f2b783431333d78397828372d363c78373e783a393b3736";
-    let v = hex_to_raw(encrypted);
+    let Hex(v) = string_to_hex(encrypted);
     let result = sbx(&v);
     let best_match = result.iter().next().unwrap();
     assert!(&best_match.1[..] == "Cooking MC's like a pound of bacon");
@@ -36,7 +38,10 @@ fn challenge_4() {
     let mut f = File::open("data/4.txt").unwrap();
     let mut s = String::new();
     let _ = f.read_to_string(&mut s);
-    let tests = s.split('\n').map(|l| hex_to_raw(&l)).collect();
+    let tests = s.split('\n').map(|l| {
+        let Hex(v) = string_to_hex(&l);
+        v
+    }).collect();
     let result = detect_sbx(&tests);
     let best_match = result.iter().next().unwrap();
     assert!(&best_match.1[..] == "Now that the party is jumping\n");
@@ -48,9 +53,9 @@ fn challenge_5() {
 I go crazy when I hear a cymbal";
     let key = "ICE";
 
-    let o = ascii_to_raw(&original);
+    let o = string_to_raw(&original);
     let result = xor_key(&o, &key);
-    let encrypted = printable16(&result);
+    let encrypted = hex_to_string(Hex(result));
 
     assert!(encrypted == "0B3637272A2B2E63622C2E69692A23693A2A3C6324202D623D63343C2A26226324272765272A282B2F20430A652E2C652A3124333A653E2B2027630C692B20283165286326302E27282F")
 }
@@ -145,7 +150,7 @@ impl Arbitrary for Text {
 #[test]
 fn hex_conversion_idempotent() {
     fn equality_after_applying_twice(t: Text) -> bool {
-        t.value == printable16(&hex_to_raw(&t.value[..]))
+        t.value == hex_to_string(string_to_hex(&t.value[..]))
     }
     quickcheck(equality_after_applying_twice as fn(Text) -> bool);
 }

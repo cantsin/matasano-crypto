@@ -5,6 +5,7 @@
 extern crate quickcheck;
 
 mod util;
+mod conversion;
 mod test;
 
 fn main() {
