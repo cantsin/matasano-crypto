@@ -80,6 +80,20 @@ fn transpose_matrix() {
 }
 
 #[test]
+fn base64_decode() {
+    let Base64(x1) = string_to_base64("TWFu");
+    let result = raw_to_string(&x1);
+    assert!(result == "Man");
+
+    let Base64(x2) = string_to_base64("YW55IGNhcm5hbCBwbGVhc3VyZS4=");
+    let result = raw_to_string(&x2);
+    assert!(result == "any carnal pleasure.");
+
+    let Base64(x3) = string_to_base64("YW55IGNhcm5hbCBwbGVhcw==");
+    let result = raw_to_string(&x3);
+    assert!(result == "any carnal pleas");
+}
+
 fn challenge_6() {
     let mut f = File::open("data/6.txt").unwrap();
     let mut s = String::new();

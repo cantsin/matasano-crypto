@@ -38,6 +38,29 @@ pub fn string_to_hex(s: &str) -> Hex {
     Hex(result)
 }
 
+pub fn string_to_base64(s: &str) -> Base64 {
+    assert!((s.len() % 4) == 0);
+    let result = s.as_bytes().chunks(4).flat_map(|elem| {
+        let e0 = BASE64_ALPHABET.find(elem[0] as char).unwrap() as u8;
+        let e1 = BASE64_ALPHABET.find(elem[1] as char).unwrap() as u8;
+        let s1 = (e0 << 2) | (e1 >> 4);
+        if elem[2] != b'=' {
+            let e2 = BASE64_ALPHABET.find(elem[2] as char).unwrap() as u8;
+            let s2 = (e1 << 4) | (e2 >> 2);
+            if elem[3] != b'=' {
+                let e3 = BASE64_ALPHABET.find(elem[3] as char).unwrap() as u8;
+                let s3 = (e2 << 6) | e3;
+                vec![s1, s2, s3]
+            } else {
+                vec![s1, s2]
+            }
+        } else {
+            vec![s1]
+        }
+    }).collect();
+    Base64(result)
+}
+
 pub fn hex_to_string(raw: Hex) -> String {
     let Hex(v) = raw;
     if v.len() == 0 {
