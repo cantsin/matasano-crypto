@@ -1,7 +1,7 @@
 #![allow(dead_code)]
 
 use std::*;
-use std::collections::{HashMap};
+use std::collections::{HashMap, BTreeMap};
 
 pub const ALPHABET: &'static str = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
 pub const HEX_ALPHABET: &'static str = "0123456789ABCDEF";
@@ -101,6 +101,33 @@ pub fn xor_key(v: &Vec<u8>, key: &str) -> Vec<u8> {
     let k: String = iter::repeat(key).take(v.len()).collect();
     let v2 = k.chars().map(|x: char| x as u8).collect();
     xor(v, &v2)
+}
+
+// single-byte xor
+pub fn sbx(v: &Vec<u8>) -> BTreeMap<i64, String> {
+    let keys = ascii_single_keys();
+    let mut map = BTreeMap::<i64, String>::new();
+    for i in keys {
+        let result = raw_to_ascii(&xor_one(&v, i as u8));
+        let p = english_probability(&result);
+        map.insert(-p, result.clone()); // flip so that better results come first
+    }
+    map
+}
+
+// detect single-byte xor
+pub fn detect_sbx(tests: &Vec<Vec<u8>>) -> BTreeMap<i64, String> {
+    let keys = ascii_single_keys();
+    let mut map = BTreeMap::new();
+
+    for test in tests {
+        for i in keys.clone() {
+            let result = raw_to_ascii(&xor_one(&test, i as u8));
+            let p = english_probability(&result);
+            map.insert(-p, result.clone()); // flip so that better results come first
+        }
+    }
+    map
 }
 
 pub fn is_printable(c: char) -> bool {

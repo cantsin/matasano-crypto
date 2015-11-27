@@ -26,20 +26,8 @@ fn challenge_2() {
 fn challenge_3() {
     let encrypted = "1b37373331363f78151b7f2b783431333d78397828372d363c78373e783a393b3736";
     let v = hex_to_raw(encrypted);
-
-    // TODO refactor
-    let keys = ascii_single_keys();
-    let mut map = BTreeMap::new();
-
-    for i in keys {
-        let result = raw_to_ascii(&xor_one(&v, i as u8));
-        let p = english_probability(&result);
-        map.insert(p, result.clone());
-    }
-
-    let best_match = map.iter().rev().next().unwrap();
-
-
+    let result = sbx(&v);
+    let best_match = result.iter().next().unwrap();
     assert!(&best_match.1[..] == "Cooking MC's like a pound of bacon");
 }
 
@@ -48,21 +36,9 @@ fn challenge_4() {
     let mut f = File::open("data/4.txt").unwrap();
     let mut s = String::new();
     let _ = f.read_to_string(&mut s);
-
-    // TODO refactor
-    let keys = ascii_single_keys();
-    let mut map = BTreeMap::new();
-
-    for line in s.split('\n') {
-        let v = hex_to_raw(&line);
-        for i in keys.clone() {
-            let result = raw_to_ascii(&xor_one(&v, i as u8));
-            let p = english_probability(&result);
-            map.insert(p, result.clone());
-        }
-    }
-
-    let best_match = map.iter().rev().next().unwrap();
+    let tests = s.split('\n').map(|l| hex_to_raw(&l)).collect();
+    let result = detect_sbx(&tests);
+    let best_match = result.iter().next().unwrap();
     assert!(&best_match.1[..] == "Now that the party is jumping\n");
 }
 
