@@ -125,6 +125,22 @@ fn challenge_7() {
     assert!(&result[n-23..] == "Play that funky music \n");
 }
 
+#[test]
+fn challenge_8() {
+    let mut f = File::open("data/8.txt").unwrap();
+    let mut s = String::new();
+    let _ = f.read_to_string(&mut s);
+    let tests: Vec<Vec<u8>> = s.split('\n').map(|l| {
+        let Hex(v) = string_to_hex(&l);
+        v
+    }).collect();
+
+    let result = test_for_aes_ecb(&tests);
+    assert!(result[0] == 216);
+    assert!(result[1] == 128);
+    assert!(result[2] == 97);
+}
+
 #[derive(Clone, Debug)]
 struct Text {
     value: String

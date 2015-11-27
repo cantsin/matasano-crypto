@@ -200,3 +200,31 @@ pub fn decrypt_aes_ecb(v: &Vec<u8>, key: &str) -> String {
     let result = decrypt(Type::AES_128_ECB, &k[..], &[], &v[..]);
     raw_to_string(&result)
 }
+
+pub fn test_for_aes_ecb(tests: &Vec<Vec<u8>>) -> Vec<u8> {
+
+    let mut highest = 0;
+    let mut best_match = vec![];
+
+    for test in tests {
+        if test.len() == 0 {
+            continue;
+        }
+
+        // do we have any repeating 16 byte patterns?
+        let mut histogram = HashMap::new();
+        let patterns: Vec<&[u8]> = test.chunks(16).collect();
+        for pattern in patterns {
+            let counter = histogram.entry(pattern).or_insert(0);
+            *counter += 1;
+        }
+
+        let max = *histogram.values().max().unwrap();
+        if max > highest {
+            highest = max;
+            best_match = test.clone();
+        }
+    }
+
+    best_match
+}
