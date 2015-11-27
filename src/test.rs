@@ -2,8 +2,6 @@
 use quickcheck::{quickcheck, Gen, Arbitrary};
 use std::io::prelude::*;
 use std::fs::File;
-use std::cmp::Ordering;
-use std::collections::BTreeMap;
 
 use conversion::*;
 use util::*;
@@ -62,21 +60,22 @@ I go crazy when I hear a cymbal";
 
 #[test]
 fn hamming_distance() {
-    assert!(hamming("this is a test", "wokka wokka!!!") == 37);
+    let phrase1 = string_to_raw("this is a test");
+    let phrase2 = string_to_raw("wokka wokka!!!");
+    assert!(hamming(&phrase1, &phrase2) == 37);
 }
 
 #[test]
 fn transpose_matrix() {
     let v: Vec<Vec<u8>> = vec![
-        vec![1,2,3,4],
-        vec![5,6,7,8],
-        vec![9,10,11,12],
-        vec![13,14,15,16]];
+        vec![1,2,3],
+        vec![5,6,7],
+        vec![9,10,11],
+        vec![13,14,15]];
     let v2 = transpose(&v);
     assert!(v2 == vec![vec![1,5,9,13],
                        vec![2,6,10,14],
-                       vec![3,7,11,15],
-                       vec![4,8,12,16]])
+                       vec![3,7,11,15]])
 }
 
 #[test]
@@ -94,52 +93,23 @@ fn base64_decode() {
     assert!(result == "any carnal pleas");
 }
 
+#[test]
 fn challenge_6() {
     let mut f = File::open("data/6.txt").unwrap();
     let mut s = String::new();
     let _ = f.read_to_string(&mut s);
-    s = s.split('\n').flat_map(|x| x.chars()).collect();
+    let raw: String = s.split('\n').flat_map(|x| x.chars()).collect();
+    let Base64(block) = string_to_base64(&raw);
 
-    // TODO: refactor into break-repeating-key-xor
-    // params: block, keysize range
+    let keysizes = likely_keysizes(&block, 2..41);
+    let keys = break_repeating_key_xor(&block, &keysizes[..3].to_vec());
+    let ref key = keys[0];
+    assert!(key == "Terminator X: Bring the noise");
 
-    let mut edit_map = BTreeMap::new();
-
-    for keysize in 2..40 {
-        let first = &s[..keysize];
-        let second = &s[keysize..keysize*2];
-        let edit_dist = hamming(&first, &second);
-        let norm = (edit_dist as f64 / keysize as f64) * 100000.0;
-        edit_map.insert(norm as usize, keysize);
-    }
-
-    print!("{:?}\n", edit_map);
-    let keys = ascii_single_keys();
-
-    // try the smallest 2-3 keysizes
-    let keysizes: Vec<usize> = edit_map.iter().take(3).map(|k| *k.1).collect();
-    for best_keysize in keysizes {
-        let chunks: Vec<Vec<u8>> = s.as_bytes().chunks(best_keysize).map(|c| {
-            c.iter().cloned().collect()
-        }).collect();
-        let transposed = transpose(&chunks);
-        let mut block_key = vec![];
-
-        for block in transposed {
-            let mut map = BTreeMap::new();
-            for key in keys.clone() {
-                let result = raw_to_ascii(&xor_one(&block, key as u8));
-                let p = english_probability(&result);
-                map.insert(p, key);
-            }
-            let best_match = map.iter().rev().next().unwrap();
-            block_key.push(*best_match.1);
-        }
-        let s: String = block_key.iter().map(|&x| x as char).collect();
-        print!("{}\n", s);
-    }
-
-    assert!(false);
+    let result = xor_key(&block, &key);
+    let decrypted = raw_to_string(&result);
+    let snippet = "I\'m back and I\'m ringin\' the bell \nA rockin\' on the mike while the fly girls yell \nIn ecstasy in the back of me \nWell that\'s my DJ Deshay cuttin\' all them Z\'s \nHittin\' hard and the girlies goin\' crazy \nVanilla\'s on the mike, man I\'m not lazy.";
+    assert!(&decrypted[..snippet.len()] == snippet);
 }
 
 #[derive(Clone, Debug)]

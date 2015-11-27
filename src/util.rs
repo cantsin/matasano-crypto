@@ -1,6 +1,6 @@
 #![allow(dead_code)]
 
-use std::*;
+use std::{iter, ops};
 use std::collections::{HashMap, BTreeMap};
 use conversion::*;
 
@@ -75,47 +75,39 @@ pub fn english_probability(s: &str) -> i64 {
         *counter += 1;
     }
     let n = s.len();
-    p += test_against(&histogram, n, ' ', 0.10, 20);
-    p += test_against(&histogram, n, 'e', 0.12, 20);
-    p += test_against(&histogram, n, 't', 0.09, 18);
-    p += test_against(&histogram, n, 'a', 0.08, 15);
-    p += test_against(&histogram, n, 'o', 0.07, 12);
-    p += test_against(&histogram, n, 'i', 0.07, 10);
+    p += test_against(&histogram, n, ' ', 0.130, 20);
+    p += test_against(&histogram, n, 'e', 0.127, 20);
+    p += test_against(&histogram, n, 't', 0.091, 18);
+    p += test_against(&histogram, n, 'a', 0.081, 15);
+    p += test_against(&histogram, n, 'o', 0.075, 12);
+    p += test_against(&histogram, n, 'i', 0.070, 10);
+    p += test_against(&histogram, n, 'n', 0.067, 9);
+    p += test_against(&histogram, n, 's', 0.063, 8);
+    p += test_against(&histogram, n, 'h', 0.061, 7);
+    p += test_against(&histogram, n, 'r', 0.060, 6);
+    p += test_against(&histogram, n, 'd', 0.043, 5);
+    p += test_against(&histogram, n, 'l', 0.040, 4);
+    // 'c', 0.02782
+    // 'u', 0.02758
+    // 'm', 0.02406
+    // 'w', 0.02361
+    // 'f', 0.02228
+    // 'g', 0.02015
+    // 'y', 0.01974
+    // 'p', 0.01929
+    // 'b', 0.01492
+    // 'v', 0.00978
+    // 'k', 0.00772
+    // 'j', 0.00153
+    // 'x', 0.00150
+    // 'q', 0.00095
+    // 'z', 0.00074
     p
 }
 
-// 'a', 8.167
-// 'b', 1.492
-// 'c', 2.782
-// 'd', 4.253
-// 'e', 12.702
-// 'f', 2.228
-// 'g', 2.015
-// 'h', 6.094
-// 'i', 6.966
-// 'j', 0.153
-// 'k', 0.772
-// 'l', 4.025
-// 'm', 2.406
-// 'n', 6.749
-// 'o', 7.507
-// 'p', 1.929
-// 'q', 0.095
-// 'r', 5.987
-// 's', 6.327
-// 't', 9.056
-// 'u', 2.758
-// 'v', 0.978
-// 'w', 2.361
-// 'x', 0.150
-// 'y', 1.974
-// 'z', 0.074
-
-pub fn hamming(s1: &str, s2: &str) -> usize {
-    assert!(s1.len() == s2.len());
-    let x1 = string_to_raw(s1);
-    let x2 = string_to_raw(s2);
-    let result = xor(&x1, &x2);
+pub fn hamming(v1: &Vec<u8>, v2: &Vec<u8>) -> usize {
+    assert!(v1.len() == v2.len());
+    let result = xor(&v1, &v2);
     result.iter().fold(0, |accum, &x| {
         let mut n = 0;
         let mut elem = x;
@@ -138,4 +130,65 @@ pub fn transpose(chunks: &Vec<Vec<u8>>) -> Vec<Vec<u8>> {
         }
     }
     vecs
+}
+
+pub fn likely_keysizes(block: &Vec<u8>, range: ops::Range<usize>) -> Vec<usize> {
+
+    let mut map = BTreeMap::new();
+
+    for keysize in range {
+        // take four keysize blocks ...
+        let first: &Vec<u8> = &block[..keysize].to_vec();
+        let second: &Vec<u8> = &block[keysize..keysize*2].to_vec();
+        let third: &Vec<u8> = &block[keysize*2..keysize*3].to_vec();
+        let fourth: &Vec<u8> = &block[keysize*3..keysize*4].to_vec();
+
+        // ... get the hamming distance for each ...
+        let edit_dist1 = hamming(first, second) as f64 / keysize as f64;
+        let edit_dist2 = hamming(first, third) as f64 / keysize as f64;
+        let edit_dist3 = hamming(first, fourth) as f64 / keysize as f64;
+        let edit_dist4 = hamming(second, third) as f64 / keysize as f64;
+        let edit_dist5 = hamming(second, fourth) as f64 / keysize as f64;
+        let edit_dist6 = hamming(third, fourth) as f64 / keysize as f64;
+
+        // ... and average the distances.
+        let norm = (edit_dist1 + edit_dist2 + edit_dist3 +
+                    edit_dist4 + edit_dist5 + edit_dist6) / 6.0 * 100000.0;
+
+        map.insert(norm as usize, keysize);
+    }
+
+    map.values().cloned().collect()
+}
+
+pub fn break_repeating_key_xor(block: &Vec<u8>, lengths: &Vec<usize>) -> Vec<String> {
+
+    let mut solutions = vec![];
+    let keys = ascii_single_keys();
+
+    for &length in lengths {
+
+        // transpose the blocks so we can xor each block with an individual key
+        let chunks: Vec<Vec<u8>> = block.chunks(length).map(|c| {
+            c.iter().cloned().collect()
+        }).collect();
+        let transposed = transpose(&chunks);
+
+        // get the best matching single key per block
+        let mut block_key = vec![];
+        for block in transposed {
+            let mut map = BTreeMap::new();
+            for key in keys.clone() {
+                let result = raw_to_string(&xor_one(&block, key as u8));
+                let p = english_probability(&result);
+                map.insert(-p, key);
+            }
+            let best_match = map.iter().next().unwrap();
+            block_key.push(*best_match.1);
+        }
+        let s: String = block_key.iter().map(|&x| x as char).collect();
+        solutions.push(s);
+    }
+
+    solutions
 }
