@@ -228,3 +228,12 @@ pub fn test_for_aes_ecb(tests: &Vec<Vec<u8>>) -> Vec<u8> {
 
     best_match
 }
+
+pub fn pad_pkcs7(v: &Vec<u8>, n: usize) -> Vec<u8> {
+    assert!(n < 256);
+    let l = n - v.len();
+    let mut result = v.clone();
+    let mut suffix: Vec<u8> = iter::repeat(l as u8).take(l).collect();
+    result.append(&mut suffix);
+    result
+}
