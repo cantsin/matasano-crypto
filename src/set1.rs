@@ -120,7 +120,7 @@ fn challenge_7() {
     let raw: String = s.split('\n').flat_map(|x| x.chars()).collect();
     let Base64(block) = string_to_base64(&raw);
 
-    let result = decrypt_aes_ecb(&block, "YELLOW SUBMARINE");
+    let result = raw_to_string(&decrypt_aes_ecb(&block, "YELLOW SUBMARINE"));
     let n = result.len();
     assert!(&result[n-23..] == "Play that funky music \n");
 }
