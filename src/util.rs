@@ -3,8 +3,16 @@
 use std::{iter, ops};
 use std::collections::{HashMap, BTreeMap};
 use openssl::crypto::symm::{encrypt, decrypt, Type};
+use rand::distributions::{IndependentSample, Range};
+use rand::{thread_rng, Rng};
 
 use conversion::*;
+
+#[derive(Debug, Clone, Copy, PartialEq, PartialOrd)]
+pub enum Mode {
+    ECB,
+    CBC
+}
 
 pub fn xor(v1: &Vec<u8>, v2: &Vec<u8>) -> Vec<u8> {
     v1.iter().zip(v2).map(|(x, y)| x ^ y).collect()
@@ -271,4 +279,37 @@ pub fn pad_pkcs7(v: &Vec<u8>, n: usize) -> Vec<u8> {
     let mut suffix: Vec<u8> = iter::repeat(l as u8).take(l).collect();
     result.append(&mut suffix);
     result
+}
+
+pub fn random_aes() -> Vec<u8> {
+    let mut rng = thread_rng();
+    (0..).take(16).map(|_| rng.gen::<u8>()).collect()
+}
+
+pub fn encryption_oracle(input: &Vec<u8>) -> (Mode, Vec<u8>) {
+    let mut rng = thread_rng();
+    // append 5-10 bytes before and after
+    let between = Range::new(5, 11);
+    let prefix_length = between.ind_sample(&mut rng);
+    let suffix_length = between.ind_sample(&mut rng);
+    let prefix: Vec<u8> = (0..).take(prefix_length).map(|_| rng.gen::<u8>()).collect();
+    let suffix: Vec<u8> = (0..).take(suffix_length).map(|_| rng.gen::<u8>()).collect();
+
+    let mut result: Vec<u8> = vec![];
+    result.extend(prefix);
+    result.extend(input.clone());
+    result.extend(suffix);
+
+    // choose a mode to encrypt
+    let key = raw_to_string(&random_aes());
+    if rng.gen() {
+        (Mode::ECB, encrypt_aes_ecb(&result, &key))
+    } else {
+        let iv = random_aes();
+        (Mode::CBC, encrypt_aes_cbc(&iv, &result, &key))
+    }
+}
+
+pub fn guess_mode(v: &Vec<u8>) -> Mode {
+    Mode::CBC
 }

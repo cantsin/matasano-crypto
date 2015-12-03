@@ -4,6 +4,7 @@
 
 extern crate quickcheck;
 extern crate openssl;
+extern crate rand;
 
 mod util;
 mod conversion;

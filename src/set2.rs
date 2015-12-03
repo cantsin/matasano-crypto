@@ -6,7 +6,7 @@ use std::io::prelude::*;
 use std::fs::File;
 
 #[test]
-fn challenge_1() {
+fn challenge_9() {
     let sample = "YELLOW SUBMARINE";
     let result = pad_pkcs7(&string_to_raw(sample), 20);
     assert!(raw_to_string(&result) == "YELLOW SUBMARINE\u{04}\u{04}\u{04}\u{04}")
@@ -32,7 +32,7 @@ fn decrypt_encrypt_cbc() {
 }
 
 #[test]
-fn challenge_2() {
+fn challenge_10() {
     let mut f = File::open("data/10.txt").unwrap();
     let mut s = String::new();
     let _ = f.read_to_string(&mut s);
@@ -46,4 +46,16 @@ fn challenge_2() {
     // "somewhat" intelligible
     let snippet = "I\'m back and I\'ml \nA rockin\' on he fly";
     assert!(&decrypted[..snippet.len()] == snippet);
+}
+
+#[test]
+fn challenge_11() {
+    for _ in 0..10 {
+        let input = random_aes();
+        let (secret_mode, result) = encryption_oracle(&input);
+        println!("input: {:?}; result: {:?}", input, result);
+        let mode = guess_mode(&result);
+        println!("--> guess was {:?}", mode);
+        assert!(mode == secret_mode);
+    }
 }
