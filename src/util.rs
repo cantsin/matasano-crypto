@@ -205,6 +205,37 @@ pub fn encrypt_aes_ecb(v: &Vec<u8>, key: &str) -> Vec<u8> {
     encrypt(Type::AES_128_ECB, &k, &[], &v)
 }
 
+pub fn decrypt_aes_cbc(iv: &Vec<u8>, block: &Vec<u8>, key: &str) -> Vec<u8> {
+    let mut previous = iv.clone();
+    let mut result: Vec<u8> = vec![];
+    let chunks: Vec<Vec<u8>> = block.chunks(key.len() * 2).map(|c| {
+        c.iter().cloned().collect()
+    }).collect();
+    for ciphertext in chunks {
+        let block = decrypt_aes_ecb(&ciphertext, key);
+        let mut plaintext = xor(&previous, &block);
+        result.append(&mut plaintext);
+        let copy = &mut ciphertext.clone();
+        previous = copy.split_off(key.len()).clone();
+    }
+    result
+}
+
+pub fn encrypt_aes_cbc(iv: &Vec<u8>, block: &Vec<u8>, key: &str) -> Vec<u8> {
+    let mut previous = iv.clone();
+    let mut result: Vec<u8> = vec![];
+    let chunks: Vec<Vec<u8>> = block.chunks(key.len()).map(|c| {
+        c.iter().cloned().collect()
+    }).collect();
+    for plaintext in chunks {
+        let block = xor(&previous, &plaintext);
+        let mut ciphertext = encrypt_aes_ecb(&block, key);
+        previous = ciphertext.clone();
+        result.append(&mut ciphertext);
+    }
+    result
+}
+
 pub fn test_for_aes_ecb(tests: &Vec<Vec<u8>>) -> Vec<u8> {
 
     let mut highest = 0;
