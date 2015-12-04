@@ -135,10 +135,13 @@ fn challenge_8() {
         v
     }).collect();
 
-    let result = test_for_aes_ecb(&tests);
-    assert!(result[0] == 216);
-    assert!(result[1] == 128);
-    assert!(result[2] == 97);
+    if let Some(result) = test_for_aes_ecb(&tests) {
+        assert!(result[0] == 216);
+        assert!(result[1] == 128);
+        assert!(result[2] == 97);
+    } else {
+        assert!(false);
+    }
 }
 
 #[derive(Clone, Debug)]

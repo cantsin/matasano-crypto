@@ -244,10 +244,10 @@ pub fn encrypt_aes_cbc(iv: &Vec<u8>, block: &Vec<u8>, key: &str) -> Vec<u8> {
     result
 }
 
-pub fn test_for_aes_ecb(tests: &Vec<Vec<u8>>) -> Vec<u8> {
+pub fn test_for_aes_ecb(tests: &Vec<Vec<u8>>) -> Option<Vec<u8>> {
 
-    let mut highest = 0;
-    let mut best_match = vec![];
+    let mut highest = 2; // err on the side of caution
+    let mut best_match = None;
 
     for test in tests {
         if test.len() == 0 {
@@ -265,7 +265,7 @@ pub fn test_for_aes_ecb(tests: &Vec<Vec<u8>>) -> Vec<u8> {
         let max = *histogram.values().max().unwrap();
         if max > highest {
             highest = max;
-            best_match = test.clone();
+            best_match = Some(test.clone());
         }
     }
 
@@ -311,5 +311,14 @@ pub fn encryption_oracle(input: &Vec<u8>) -> (Mode, Vec<u8>) {
 }
 
 pub fn guess_mode(v: &Vec<u8>) -> Mode {
-    Mode::CBC
+    if v.len() < 64 {
+        panic!("Not enough information provided.");
+    }
+
+    // look for repeating sub-patterns
+    let tests: Vec<Vec<u8>> = (0..16).map(|n| v[n..].to_vec()).collect();
+    match test_for_aes_ecb(&tests) {
+        Some(_) => Mode::ECB,
+        None => Mode::CBC
+    }
 }

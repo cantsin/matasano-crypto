@@ -1,9 +1,12 @@
 
-use conversion::*;
-use util::*;
 use std::{iter};
 use std::io::prelude::*;
 use std::fs::File;
+use rand::distributions::{IndependentSample, Range};
+use rand::{thread_rng, Rng};
+
+use conversion::*;
+use util::*;
 
 #[test]
 fn challenge_9() {
@@ -50,12 +53,12 @@ fn challenge_10() {
 
 #[test]
 fn challenge_11() {
-    for _ in 0..10 {
-        let input = random_aes();
-        let (secret_mode, result) = encryption_oracle(&input);
-        println!("input: {:?}; result: {:?}", input, result);
+    let mut rng = thread_rng();
+    for _ in 0..100 {
+        let n = Range::new(64, 256).ind_sample(&mut rng);
+        let plaintext: Vec<u8> = iter::repeat('x' as u8).take(n).collect();
+        let (secret_mode, result) = encryption_oracle(&plaintext);
         let mode = guess_mode(&result);
-        println!("--> guess was {:?}", mode);
         assert!(mode == secret_mode);
     }
 }
