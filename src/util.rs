@@ -21,7 +21,7 @@ pub fn xor_key(v: &Vec<u8>, key: &str) -> Vec<u8> {
 
 pub fn is_printable(c: char) -> bool {
     let v = c as u8;
-    v >= 32 && v < 127
+    (v >= 10 && v <= 11) || (v >= 32 && v < 127)
 }
 
 pub fn transpose(chunks: &Vec<Vec<u8>>) -> Vec<Vec<u8>> {

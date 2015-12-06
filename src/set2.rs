@@ -61,8 +61,10 @@ fn challenge_11() {
 fn challenge_12() {
     let mystery_string = "Um9sbGluJyBpbiBteSA1LjAKV2l0aCBteSByYWctdG9wIGRvd24gc28gbXkgaGFpciBjYW4gYmxvdwpUaGUgZ2lybGllcyBvbiBzdGFuZGJ5IHdhdmluZyBqdXN0IHRvIHNheSBoaQpEaWQgeW91IHN0b3A/IE5vLCBJIGp1c3QgZHJvdmUgYnkK";
     let Base64(mystery) = string_to_base64(&mystery_string);
-    let random_key = "testing testing ";
+    let random_key = raw_to_string(&random_aes());
     let oracle = create_oracle(&mystery, &random_key);
     let result = decrypt_ecb_simple(oracle);
-    assert!(result == raw_to_string(&mystery));
+    // we may be decrypting past the known string due to the
+    // ciphertext being rounded up to the nearest block size.
+    assert!(result[..mystery.len()] == raw_to_string(&mystery));
 }
