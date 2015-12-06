@@ -114,3 +114,15 @@ pub fn pad_pkcs7(v: &Vec<u8>, n: usize) -> Vec<u8> {
     result.append(&mut suffix);
     result
 }
+
+pub fn gcd(a: usize, b: usize) -> usize {
+    if b == 0 {
+        a
+    } else {
+        gcd(b, a % b)
+    }
+}
+
+pub fn gcd_array(lengths: &Vec<usize>) -> usize {
+    lengths.iter().fold(0, |accum, &v| gcd(accum, v))
+}

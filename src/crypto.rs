@@ -210,3 +210,20 @@ pub fn guess_mode(v: &Vec<u8>) -> Mode {
         None => Mode::CBC
     }
 }
+
+pub type Oracle = Fn(&Vec<u8>) -> Vec<u8>;
+
+pub fn create_oracle(_mystery: &Vec<u8>, _key: &str) -> Box<Oracle> {
+    let mystery = _mystery.clone();
+    let key = _key.to_string().clone();
+    Box::new(move |input: &Vec<u8>| {
+        let mut result: Vec<u8> = vec![];
+        result.extend(input.clone());
+        result.extend(mystery.clone());
+        encrypt_aes_ecb(&result, &key)
+    })
+}
+
+pub fn decrypt_ecb_simple(oracle: Box<Oracle>) -> String {
+    return "not implemented".to_string();
+}
