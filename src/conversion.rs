@@ -1,4 +1,7 @@
 
+use std::io::prelude::*;
+use std::fs::File;
+
 pub const ALPHABET: &'static str = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789 !\"#$%&'()*+,-./:;<=>?@{|}~";
 pub const HEX_ALPHABET: &'static str = "0123456789ABCDEF";
 pub const BASE64_ALPHABET: &'static str = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
@@ -112,5 +115,23 @@ pub fn base64_to_string(raw: Base64) -> String {
             x /= 64;
         }
         v.chars().rev().collect::<String>()
+    }).collect()
+}
+
+pub fn read_base64_file(filename: &str) -> Base64 {
+    let mut f = File::open(filename).unwrap();
+    let mut s = String::new();
+    let _ = f.read_to_string(&mut s);
+    let raw: String = s.split('\n').flat_map(|x| x.chars()).collect();
+    string_to_base64(&raw)
+}
+
+pub fn read_hexlines_file(filename: &str) -> Vec<Vec<u8>> {
+    let mut f = File::open(filename).unwrap();
+    let mut s = String::new();
+    let _ = f.read_to_string(&mut s);
+    s.split('\n').map(|l| {
+        let Hex(v) = string_to_hex(&l);
+        v
     }).collect()
 }

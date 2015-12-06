@@ -1,9 +1,8 @@
 
 use quickcheck::{quickcheck, Gen, Arbitrary};
-use std::io::prelude::*;
-use std::fs::File;
 
 use conversion::*;
+use crypto::*;
 use util::*;
 
 #[test]
@@ -26,21 +25,15 @@ fn challenge_2() {
 fn challenge_3() {
     let encrypted = "1b37373331363f78151b7f2b783431333d78397828372d363c78373e783a393b3736";
     let Hex(v) = string_to_hex(encrypted);
-    let result = sbx(&v);
+    let result = single_byte_xor(&v);
     let best_match = result.iter().next().unwrap();
     assert!(&best_match.1[..] == "Cooking MC's like a pound of bacon");
 }
 
 #[test]
 fn challenge_4() {
-    let mut f = File::open("data/4.txt").unwrap();
-    let mut s = String::new();
-    let _ = f.read_to_string(&mut s);
-    let tests = s.split('\n').map(|l| {
-        let Hex(v) = string_to_hex(&l);
-        v
-    }).collect();
-    let result = detect_sbx(&tests);
+    let tests = read_hexlines_file("data/4.txt");
+    let result = detect_single_byte_xor(&tests);
     let best_match = result.iter().next().unwrap();
     assert!(&best_match.1[..] == "Now that the party is jumping\n");
 }
@@ -95,12 +88,7 @@ fn base64_decode() {
 
 #[test]
 fn challenge_6() {
-    let mut f = File::open("data/6.txt").unwrap();
-    let mut s = String::new();
-    let _ = f.read_to_string(&mut s);
-    let raw: String = s.split('\n').flat_map(|x| x.chars()).collect();
-    let Base64(block) = string_to_base64(&raw);
-
+    let Base64(block) = read_base64_file("data/6.txt");
     let keysizes = likely_keysizes(&block, 2..41);
     let keys = break_repeating_key_xor(&block, &keysizes[..3].to_vec());
     let ref key = keys[0];
@@ -114,12 +102,7 @@ fn challenge_6() {
 
 #[test]
 fn challenge_7() {
-    let mut f = File::open("data/7.txt").unwrap();
-    let mut s = String::new();
-    let _ = f.read_to_string(&mut s);
-    let raw: String = s.split('\n').flat_map(|x| x.chars()).collect();
-    let Base64(block) = string_to_base64(&raw);
-
+    let Base64(block) = read_base64_file("data/7.txt");
     let result = raw_to_string(&decrypt_aes_ecb(&block, "YELLOW SUBMARINE"));
     let n = result.len();
     assert!(&result[n-23..] == "Play that funky music \n");
@@ -127,14 +110,7 @@ fn challenge_7() {
 
 #[test]
 fn challenge_8() {
-    let mut f = File::open("data/8.txt").unwrap();
-    let mut s = String::new();
-    let _ = f.read_to_string(&mut s);
-    let tests: Vec<Vec<u8>> = s.split('\n').map(|l| {
-        let Hex(v) = string_to_hex(&l);
-        v
-    }).collect();
-
+    let tests = read_hexlines_file("data/8.txt");
     if let Some(result) = test_for_aes_ecb(&tests) {
         assert!(result[0] == 216);
         assert!(result[1] == 128);

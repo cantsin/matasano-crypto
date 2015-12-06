@@ -7,6 +7,7 @@ extern crate openssl;
 extern crate rand;
 
 mod util;
+mod crypto;
 mod conversion;
 mod set1;
 mod set2;

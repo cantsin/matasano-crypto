@@ -1,11 +1,10 @@
 
 use std::{iter};
-use std::io::prelude::*;
-use std::fs::File;
 use rand::distributions::{IndependentSample, Range};
 use rand::{thread_rng, Rng};
 
 use conversion::*;
+use crypto::*;
 use util::*;
 
 #[test]
@@ -36,12 +35,7 @@ fn decrypt_encrypt_cbc() {
 
 #[test]
 fn challenge_10() {
-    let mut f = File::open("data/10.txt").unwrap();
-    let mut s = String::new();
-    let _ = f.read_to_string(&mut s);
-    let raw: String = s.split('\n').flat_map(|x| x.chars()).collect();
-    let Base64(block) = string_to_base64(&raw);
-
+    let Base64(block) = read_base64_file("data/10.txt");
     let key = "YELLOW SUBMARINE";
     let iv: Vec<u8> = iter::repeat(0).take(16).collect();
     let result = decrypt_aes_cbc(&iv, &block, key);
@@ -61,4 +55,10 @@ fn challenge_11() {
         let mode = guess_mode(&result);
         assert!(mode == secret_mode);
     }
+}
+
+#[test]
+fn challenge_12() {
+    let mystery_string = "Um9sbGluJyBpbiBteSA1LjAKV2l0aCBteSByYWctdG9wIGRvd24gc28gbXkgaGFpciBjYW4gYmxvdwpUaGUgZ2lybGllcyBvbiBzdGFuZGJ5IHdhdmluZyBqdXN0IHRvIHNheSBoaQpEaWQgeW91IHN0b3A/IE5vLCBJIGp1c3QgZHJvdmUgYnkK";
+    let Base64(mystery) = string_to_base64(&mystery_string);
 }
