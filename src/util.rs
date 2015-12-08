@@ -126,3 +126,11 @@ pub fn gcd(a: usize, b: usize) -> usize {
 pub fn gcd_array(lengths: &Vec<usize>) -> usize {
     lengths.iter().fold(0, |accum, &v| gcd(accum, v))
 }
+
+pub fn key_value(query: &str) -> Vec<(&str, &str)> {
+    // no validation or error checking.
+    query.split('&').map(|x| {
+        let result: Vec<&str> = x.split('=').collect();
+        (result[0], result[1])
+    }).collect()
+}

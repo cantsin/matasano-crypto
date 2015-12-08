@@ -68,3 +68,10 @@ fn challenge_12() {
     // ciphertext being rounded up to the nearest block size.
     assert!(result[..mystery.len()] == raw_to_string(&mystery));
 }
+
+#[test]
+fn test_key_value() {
+    let query = "foo=bar&baz=qux&zap=zazzle";
+    let result = vec![("foo", "bar"), ("baz", "qux"), ("zap", "zazzle")];
+    assert!(key_value(query) == result);
+}
