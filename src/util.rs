@@ -127,10 +127,20 @@ pub fn gcd_array(lengths: &Vec<usize>) -> usize {
     lengths.iter().fold(0, |accum, &v| gcd(accum, v))
 }
 
-pub fn key_value(query: &str) -> Vec<(&str, &str)> {
+pub fn key_value(query: &str) -> Vec<(String, String)> {
     // no validation or error checking.
     query.split('&').map(|x| {
         let result: Vec<&str> = x.split('=').collect();
-        (result[0], result[1])
+        (result[0].to_string(),
+         result[1].to_string())
     }).collect()
+}
+
+pub fn profile_for(email: &str) -> String {
+    let uid = 10;
+    let role = "user";
+    let email = email.clone();
+    let email = email.replace("&", "");
+    let email = email.replace("=", "");
+    format!("email={}&uid={}&role={}", email, uid, role).clone()
 }

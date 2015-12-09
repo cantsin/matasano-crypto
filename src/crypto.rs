@@ -276,3 +276,17 @@ pub fn decrypt_ecb_simple(oracle: Box<Oracle>) -> String {
 
     return raw_to_string(&decrypted);
 }
+
+pub fn encrypt_profile(profile: &str) -> (String, Vec<u8>) {
+    let key = raw_to_string(&random_aes());
+    let data = string_to_raw(profile.clone());
+    let encrypted = encrypt_aes_ecb(&data, &key);
+    // "provide" the key to the "attacker"
+    (key, encrypted)
+}
+
+pub fn decrypt_profile(profile: &Vec<u8>, key: &str) -> Vec<(String, String)> {
+    let result = decrypt_aes_ecb(&profile, &key);
+    let profile = raw_to_string(&result);
+    key_value(&profile)
+}

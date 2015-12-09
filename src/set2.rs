@@ -72,6 +72,22 @@ fn challenge_12() {
 #[test]
 fn test_key_value() {
     let query = "foo=bar&baz=qux&zap=zazzle";
-    let result = vec![("foo", "bar"), ("baz", "qux"), ("zap", "zazzle")];
+    let desired = vec![("foo", "bar"), ("baz", "qux"), ("zap", "zazzle")];
+    let result: Vec<(String, String)> = desired.iter().map(|&(k, v)| {
+        (k.to_string(),
+         v.to_string())
+    }).collect();
     assert!(key_value(query) == result);
+}
+
+#[test]
+fn test_profile_for() {
+    let encoding = "email=foo@bar.com&uid=10&role=user";
+    assert!(profile_for("foo@bar.com") == encoding);
+}
+
+#[test]
+fn test_profile_for_is_sane() {
+    let encoding = "email=foo@bar.comroleadmin&uid=10&role=user";
+    assert!(profile_for("foo@bar.com&role=admin") == encoding);
 }
