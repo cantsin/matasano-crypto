@@ -91,3 +91,37 @@ fn test_profile_for_is_sane() {
     let encoding = "email=foo@bar.comroleadmin&uid=10&role=user";
     assert!(profile_for("foo@bar.com&role=admin") == encoding);
 }
+
+#[test]
+fn create_role_admin() {
+    let padded = pad_pkcs7(&string_to_raw("admin"), 16);
+    let profile = "not-a-suspicious-user@foo.com";
+
+    // construct a string such that we cut off "...&role=" in its own block
+    let (split1, split2) = profile.split_at(10);
+    let mut modified_profile = vec![];
+    modified_profile.extend(split1.bytes());
+    modified_profile.extend(&padded);
+    modified_profile.extend(split2.bytes());
+
+    let new_profile = profile_for(&raw_to_string(&modified_profile));
+    let (key, encrypted) = encrypt_profile(&new_profile);
+
+    // split the blocks up.
+    let first = &encrypted[..16];
+    let admin = &encrypted[16..32];
+    let second = &encrypted[32..64];
+
+    // re-splice.
+    let mut result = vec![];
+    result.extend(first);
+    result.extend(second);
+    result.extend(admin);
+
+    let new_user = decrypt_profile(&result, &key);
+
+    let string_tuple = |k: &str, v: &str| (k.to_string(), v.to_string());
+    assert!(new_user[0] == string_tuple("email", "not-a-suspicious-user@foo.com"));
+    assert!(new_user[1] == string_tuple("uid", "10"));
+    assert!(new_user[2] == string_tuple("role", "admin"));
+}
