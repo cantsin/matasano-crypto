@@ -213,7 +213,7 @@ pub fn guess_mode(v: &Vec<u8>) -> Mode {
 
 pub type Oracle = Fn(&Vec<u8>) -> Vec<u8>;
 
-pub fn create_oracle(_mystery: &Vec<u8>, _key: &str) -> Box<Oracle> {
+pub fn create_simple_oracle(_mystery: &Vec<u8>, _key: &str) -> Box<Oracle> {
     let mystery = _mystery.clone();
     let key = _key.to_string().clone();
     Box::new(move |input: &Vec<u8>| {
@@ -289,4 +289,21 @@ pub fn decrypt_profile(profile: &Vec<u8>, key: &str) -> Vec<(String, String)> {
     let result = decrypt_aes_ecb(&profile, &key);
     let profile = raw_to_string(&result);
     key_value(&profile)
+}
+
+pub fn create_harder_oracle(_mystery: &Vec<u8>, _key: &str) -> Box<Oracle> {
+    let mut rng = thread_rng();
+    // append 5-10 bytes before
+    let between = Range::new(5, 11);
+    let prefix_length = between.ind_sample(&mut rng);
+    let prefix: Vec<u8> = (0..).take(prefix_length).map(|_| rng.gen::<u8>()).collect();
+    let mystery = _mystery.clone();
+    let key = _key.to_string().clone();
+    Box::new(move |input: &Vec<u8>| {
+        let mut result: Vec<u8> = vec![];
+        result.extend(prefix.clone());
+        result.extend(input.clone());
+        result.extend(mystery.clone());
+        encrypt_aes_ecb(&result, &key)
+    })
 }
