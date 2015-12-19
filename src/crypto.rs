@@ -224,7 +224,7 @@ pub fn create_simple_oracle(_mystery: &Vec<u8>, _key: &str) -> Box<Oracle> {
     })
 }
 
-pub fn decrypt_ecb_simple(oracle: Box<Oracle>) -> String {
+pub fn decrypt_ecb(oracle: Box<Oracle>) -> String {
 
     let x = iter::repeat('x' as u8);
 
@@ -242,9 +242,29 @@ pub fn decrypt_ecb_simple(oracle: Box<Oracle>) -> String {
     let mode = guess_mode(&oracle(&test));
     assert!(mode == Mode::ECB);
 
+    // begin "harder" ecb decryption
+    println!("");
+    let raw_length = oracle(&vec![]).len();
+    let number_of_blocks = raw_length / block_size;
+    println!("raw_length is {}", raw_length);
+
+    let mut rev_offset = 0;
+    for size in 0..block_size {
+        let repeating: Vec<u8> = x.clone().take(size).collect();
+        let current_length = oracle(&repeating).len();
+        println!("current_length is {}", current_length);
+        if current_length > raw_length {
+            rev_offset = size;
+            break;
+        }
+    }
+    let offset = block_size - rev_offset;
+    println!("offset is {}", offset);
+    // end "harder" ecb decryption
+
     // decrypt.
     let mut decrypted = vec![];
-    for i in 0.. {
+    for i in offset.. {
 
         // which block are we looking at?
         let b = i / block_size;
@@ -296,6 +316,7 @@ pub fn create_harder_oracle(_mystery: &Vec<u8>, _key: &str) -> Box<Oracle> {
     // append 5-10 bytes before
     let between = Range::new(5, 11);
     let prefix_length = between.ind_sample(&mut rng);
+    let prefix_length = 5;
     let prefix: Vec<u8> = (0..).take(prefix_length).map(|_| rng.gen::<u8>()).collect();
     let mystery = _mystery.clone();
     let key = _key.to_string().clone();
