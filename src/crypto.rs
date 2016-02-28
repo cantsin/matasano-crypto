@@ -242,25 +242,72 @@ pub fn decrypt_ecb(oracle: Box<Oracle>) -> String {
     let mode = guess_mode(&oracle(&test));
     assert!(mode == Mode::ECB);
 
-    // begin "harder" ecb decryption
-    println!("");
-    let raw_length = oracle(&vec![]).len();
-    let number_of_blocks = raw_length / block_size;
-    println!("raw_length is {}", raw_length);
+    // decrypt.
+    let mut decrypted = vec![];
+    for i in 0.. {
 
-    let mut rev_offset = 0;
-    for size in 0..block_size {
-        let repeating: Vec<u8> = x.clone().take(size).collect();
-        let current_length = oracle(&repeating).len();
-        println!("current_length is {}", current_length);
-        if current_length > raw_length {
-            rev_offset = size;
-            break;
+        // which block are we looking at?
+        let b = i / block_size;
+        let n = ((b + 1) * block_size) - i - 1;
+
+        let mut prefix: Vec<u8> = x.clone().take(n as usize).collect();
+        let result = &oracle(&prefix);
+        let range = block_size*b..block_size*(b + 1);
+        let matching = result[range.clone()].to_vec();
+        prefix.extend(decrypted.clone());
+
+        // construct the attack dictionary.
+        let mut attack = HashMap::new();
+        for ch in 0..255u8 {
+            let mut test = prefix.clone();
+            test.push(ch);
+            let result = &oracle(&test);
+            let block = result[range.clone()].to_vec();
+            attack.insert(block, ch);
+        }
+
+        // keep going until we can't match any more.
+        let block = attack.get(&matching.clone());
+        match block {
+            Some(ch) => decrypted.push(ch.clone()),
+            _ => break
         }
     }
-    let offset = block_size - rev_offset;
-    println!("offset is {}", offset);
-    // end "harder" ecb decryption
+
+    return raw_to_string(&decrypted);
+}
+
+pub fn decrypt_ecb2(oracle: Box<Oracle>) -> String {
+
+    let x = iter::repeat('x' as u8);
+
+    // discover the cipher block size.
+    let mut sizes = vec![];
+    for size in 0..32 {
+        let test: Vec<u8> = x.clone().take(size).collect();
+        let result = oracle(&test);
+        sizes.push(result.len());
+    }
+    let block_size = gcd_array(&sizes);
+
+    // make sure we do indeed have an ecb oracle on our hands.
+    let test: Vec<u8> = x.clone().take(128).collect();
+    let mode = guess_mode(&oracle(&test));
+    assert!(mode == Mode::ECB);
+
+    // begin "harder" ecb decryption
+    let mut offset = 0;
+    'outer: for n in 32.. {
+        let repeating: Vec<u8> = x.clone().take(n).collect();
+        let cipher = oracle(&repeating);
+        let patterns: Vec<&[u8]> = cipher.chunks(block_size).collect();
+        for i in 0..patterns.len() - 1 {
+            if patterns[i] == patterns[i+1] {
+                offset = 16 - (n % 16);
+                break 'outer;
+            }
+        }
+    }
 
     // decrypt.
     let mut decrypted = vec![];
@@ -316,7 +363,6 @@ pub fn create_harder_oracle(_mystery: &Vec<u8>, _key: &str) -> Box<Oracle> {
     // append 5-10 bytes before
     let between = Range::new(5, 11);
     let prefix_length = between.ind_sample(&mut rng);
-    let prefix_length = 5;
     let prefix: Vec<u8> = (0..).take(prefix_length).map(|_| rng.gen::<u8>()).collect();
     let mystery = _mystery.clone();
     let key = _key.to_string().clone();

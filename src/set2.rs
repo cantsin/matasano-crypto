@@ -132,7 +132,7 @@ fn challenge_14() {
     let Base64(mystery) = string_to_base64(&mystery_string);
     let random_key = raw_to_string(&random_aes());
     let oracle = create_harder_oracle(&mystery, &random_key);
-    let result = decrypt_ecb(oracle);
+    let result = decrypt_ecb2(oracle);
     // we may be decrypting past the known string due to the
     // ciphertext being rounded up to the nearest block size.
     assert!(result[..mystery.len()] == raw_to_string(&mystery));
