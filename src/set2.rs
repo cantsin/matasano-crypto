@@ -137,3 +137,10 @@ fn challenge_14() {
     // ciphertext being rounded up to the nearest block size.
     assert!(result[..mystery.len()] == raw_to_string(&mystery));
 }
+
+#[test]
+fn challenge_15() {
+    assert!(strip_padding("ICE ICE BABY\x04\x04\x04\x04") == Some("ICE ICE BABY".to_string()));
+    assert!(strip_padding("ICE ICE BABY\x05\x05\x05\x05") == None);
+    assert!(strip_padding("ICE ICE BABY\x01\x02\x03\x04") == None);
+}

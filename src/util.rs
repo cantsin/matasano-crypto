@@ -144,3 +144,14 @@ pub fn profile_for(email: &str) -> String {
     let email = email.replace("=", "");
     format!("email={}&uid={}&role={}", email, uid, role).clone()
 }
+
+pub fn strip_padding(s: &str) -> Option<String> {
+    let n = s.len();
+    for i in 1..n {
+        let padding = &s[n-i..n];
+        if padding.bytes().all(|x| x == i as u8) {
+            return Some(s[..n-i].to_string())
+        }
+    }
+    None
+}
