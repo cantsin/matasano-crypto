@@ -144,3 +144,15 @@ fn challenge_15() {
     assert!(strip_padding("ICE ICE BABY\x05\x05\x05\x05") == None);
     assert!(strip_padding("ICE ICE BABY\x01\x02\x03\x04") == None);
 }
+
+#[test]
+fn test_is_admin() {
+    let random_key = raw_to_string(&random_aes());
+    let iv: Vec<u8> = iter::repeat(0).take(16).collect();
+    let legit = "foo=bar;admin=true;bar=baz";
+    let encrypted1 = encrypt_aes_cbc(&iv, &string_to_raw(legit), &random_key);
+    assert!(is_admin(&encrypted1, &random_key[..]) == true);
+    let not_legit = "foo=bar;bar=baz";
+    let encrypted2 = encrypt_aes_cbc(&iv, &string_to_raw(not_legit), &random_key);
+    assert!(is_admin(&encrypted2, &random_key[..]) == false);
+}

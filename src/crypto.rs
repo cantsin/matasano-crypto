@@ -242,21 +242,21 @@ pub fn decrypt_ecb(oracle: Box<Oracle>) -> String {
     let mode = guess_mode(&oracle(&test));
     assert!(mode == Mode::ECB);
 
-    // begin "harder" ecb decryption
+    // begin "harder" ecb decryption if applicable
     let mut offset = 0;
-    'outer: for n in 32.. {
+    'outer: for n in block_size*2.. {
         let repeating: Vec<u8> = x.clone().take(n).collect();
         let cipher = oracle(&repeating);
         let patterns: Vec<&[u8]> = cipher.chunks(block_size).collect();
         for i in 0..patterns.len() - 1 {
             if patterns[i] == patterns[i+1] {
-                offset = 16 - (n % 16);
+                offset = block_size - (n % block_size);
                 break 'outer;
             }
         }
     }
     // account for the case where we have no initial padding
-    offset = offset % 16;
+    offset = offset % block_size;
 
     // decrypt.
     let mut decrypted = vec![];
@@ -322,4 +322,42 @@ pub fn create_harder_oracle(_mystery: &Vec<u8>, _key: &str) -> Box<Oracle> {
         result.extend(mystery.clone());
         encrypt_aes_ecb(&result, &key)
     })
+}
+
+pub fn create_userdata(userdata: &str, key: &str) -> Vec<u8> {
+    let prefix = "comment1=cooking%20MCs;userdata=";
+    let suffix = ";comment2=%20like%20a%20pound%20of%20bacon";
+
+    // quote out ';' and '=' characters in the input
+    let userdata = userdata.clone();
+    let userdata = userdata.replace(";", "%3B");
+    let userdata = userdata.replace("=", "%3D");
+
+    let mut data: Vec<u8> = vec![];
+    let p1: Vec<u8> = prefix.bytes().collect();
+    let p2: Vec<u8> = userdata.bytes().collect();
+    let p3: Vec<u8> = suffix.bytes().collect();
+    data.extend(p1);
+    data.extend(p2);
+    data.extend(p3);
+
+    let length = data.len();
+    let padding = pad_pkcs7(&data, length + (16 - (length % 16)));
+    let iv: Vec<u8> = iter::repeat(0).take(16).collect();
+    let encrypted = encrypt_aes_cbc(&iv, &padding, &key);
+    encrypted.clone()
+}
+
+pub fn is_admin(profile: &Vec<u8>, key: &str) -> bool {
+    let iv: Vec<u8> = iter::repeat(0).take(16).collect();
+    let result = decrypt_aes_cbc(&iv, &profile, &key);
+    let profile = raw_to_string(&result);
+    let subsets: Vec<&str> = profile.split(';').collect();
+    for subset in subsets {
+        let result: Vec<&str> = subset.split('=').collect();
+        if result.len() == 2 && result[0] == "admin" && result[1] == "true" {
+            return true
+        }
+    }
+    false
 }
