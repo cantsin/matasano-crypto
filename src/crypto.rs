@@ -1,7 +1,7 @@
 
 use std::{iter, ops};
 use std::collections::{HashMap, BTreeMap};
-use openssl::crypto::symm::{encrypt, decrypt, Type};
+use openssl::crypto::symm::{Crypter, Mode, Type};
 use rand::distributions::{IndependentSample, Range};
 use rand::{thread_rng, Rng};
 
@@ -9,7 +9,7 @@ use conversion::*;
 use util::*;
 
 #[derive(Debug, Clone, Copy, PartialEq, PartialOrd)]
-pub enum Mode {
+pub enum EncryptionMode {
     ECB,
     CBC
 }
@@ -102,18 +102,26 @@ pub fn break_repeating_key_xor(block: &Vec<u8>, lengths: &Vec<usize>) -> Vec<Str
 }
 pub fn decrypt_aes_ecb(v: &Vec<u8>, key: &str) -> Vec<u8> {
     let k = string_to_raw(key);
-    decrypt(Type::AES_128_ECB, &k, &[], &v)
+    let decrypter = Crypter::new(Type::AES_128_ECB);
+    let iv: Vec<u8> = iter::repeat(0).take(16).collect();
+    decrypter.init(Mode::Decrypt, &k, &iv);
+    decrypter.pad(false);
+    decrypter.update(v)
 }
 
 pub fn encrypt_aes_ecb(v: &Vec<u8>, key: &str) -> Vec<u8> {
     let k = string_to_raw(key);
-    encrypt(Type::AES_128_ECB, &k, &[], &v)
+    let encrypter = Crypter::new(Type::AES_128_ECB);
+    let iv: Vec<u8> = iter::repeat(0).take(16).collect();
+    encrypter.init(Mode::Encrypt, &k, &iv);
+    encrypter.pad(false);
+    encrypter.update(v)
 }
 
 pub fn decrypt_aes_cbc(iv: &Vec<u8>, block: &Vec<u8>, key: &str) -> Vec<u8> {
     let mut previous = iv.clone();
     let mut result: Vec<u8> = vec![];
-    let chunks: Vec<Vec<u8>> = block.chunks(key.len() * 2).map(|c| {
+    let chunks: Vec<Vec<u8>> = block.chunks(key.len()).map(|c| {
         c.iter().cloned().collect()
     }).collect();
     for ciphertext in chunks {
@@ -121,7 +129,7 @@ pub fn decrypt_aes_cbc(iv: &Vec<u8>, block: &Vec<u8>, key: &str) -> Vec<u8> {
         let mut plaintext = xor(&previous, &block);
         result.append(&mut plaintext);
         let copy = &mut ciphertext.clone();
-        previous = copy.split_off(key.len()).clone();
+        previous = copy.clone();
     }
     result
 }
@@ -174,7 +182,7 @@ pub fn random_aes() -> Vec<u8> {
     (0..).take(16).map(|_| rng.gen::<u8>()).collect()
 }
 
-pub fn encryption_oracle(input: &Vec<u8>) -> (Mode, Vec<u8>) {
+pub fn encryption_oracle(input: &Vec<u8>) -> (EncryptionMode, Vec<u8>) {
     let mut rng = thread_rng();
     // append 5-10 bytes before and after
     let between = Range::new(5, 11);
@@ -191,23 +199,23 @@ pub fn encryption_oracle(input: &Vec<u8>) -> (Mode, Vec<u8>) {
     // choose a mode to encrypt
     let key = raw_to_string(&random_aes());
     if rng.gen() {
-        (Mode::ECB, encrypt_aes_ecb(&result, &key))
+        (EncryptionMode::ECB, encrypt_aes_ecb(&result, &key))
     } else {
         let iv = random_aes();
-        (Mode::CBC, encrypt_aes_cbc(&iv, &result, &key))
+        (EncryptionMode::CBC, encrypt_aes_cbc(&iv, &result, &key))
     }
 }
 
-pub fn guess_mode(v: &Vec<u8>) -> Mode {
-    if v.len() < 64 {
+pub fn guess_mode(v: &Vec<u8>) -> EncryptionMode {
+    if v.len() < 32 {
         panic!("Not enough information provided.");
     }
 
     // look for repeating sub-patterns
     let tests: Vec<Vec<u8>> = (0..16).map(|n| v[n..].to_vec()).collect();
     match test_for_aes_ecb(&tests) {
-        Some(_) => Mode::ECB,
-        None => Mode::CBC
+        Some(_) => EncryptionMode::ECB,
+        None => EncryptionMode::CBC
     }
 }
 
@@ -240,7 +248,7 @@ pub fn decrypt_ecb(oracle: Box<Oracle>) -> String {
     // make sure we do indeed have an ecb oracle on our hands.
     let test: Vec<u8> = x.clone().take(128).collect();
     let mode = guess_mode(&oracle(&test));
-    assert!(mode == Mode::ECB);
+    assert!(mode == EncryptionMode::ECB);
 
     // begin "harder" ecb decryption if applicable
     let mut offset = 0;

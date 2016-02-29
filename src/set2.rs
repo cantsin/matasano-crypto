@@ -34,14 +34,23 @@ fn decrypt_encrypt_cbc() {
 }
 
 #[test]
+fn decrypt_encrypt_cbc_complex() {
+    let key = "YELLOW SUBMARINE";
+    let sample = "a test a testing - and now for something significantly longer...";
+    let iv: Vec<u8> = iter::repeat(0).take(16).collect();
+    let encrypted = encrypt_aes_cbc(&iv, &string_to_raw(sample), key);
+    let decrypted = raw_to_string(&decrypt_aes_cbc(&iv, &encrypted, key));
+    assert!(decrypted == sample);
+}
+
+#[test]
 fn challenge_10() {
     let Base64(block) = read_base64_file("data/10.txt");
     let key = "YELLOW SUBMARINE";
     let iv: Vec<u8> = iter::repeat(0).take(16).collect();
     let result = decrypt_aes_cbc(&iv, &block, key);
     let decrypted = raw_to_string(&result);
-    // "somewhat" intelligible
-    let snippet = "I\'m back and I\'ml \nA rockin\' on he fly";
+    let snippet = "I\'m back and I\'m ringin\' the bell ";
     assert!(&decrypted[..snippet.len()] == snippet);
 }
 

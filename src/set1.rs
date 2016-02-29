@@ -105,7 +105,8 @@ fn challenge_7() {
     let Base64(block) = read_base64_file("data/7.txt");
     let result = raw_to_string(&decrypt_aes_ecb(&block, "YELLOW SUBMARINE"));
     let n = result.len();
-    assert!(&result[n-23..] == "Play that funky music \n");
+    // result is pkcs7 padded
+    assert!(&result[n-27..n-4] == "Play that funky music \n");
 }
 
 #[test]
