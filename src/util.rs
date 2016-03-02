@@ -1,9 +1,22 @@
 #![allow(dead_code)]
 
-use std::{iter};
+use std::{iter, cmp};
 use std::collections::{HashMap};
+use rand::{thread_rng, Rng};
 
 use conversion::*;
+
+pub fn random_string(n: usize) -> String {
+    let mut rng = thread_rng();
+    (0..).take(n).map(|_| {
+        // avoid setting the higher bit so this looks like a randomly generated ascii key
+        let mut result = rng.gen::<u8>();
+        while result >= 0x7f {
+            result = rng.gen::<u8>();
+        }
+        result as char
+    }).collect()
+}
 
 pub fn xor(v1: &Vec<u8>, v2: &Vec<u8>) -> Vec<u8> {
     v1.iter().zip(v2).map(|(x, y)| x ^ y).collect()

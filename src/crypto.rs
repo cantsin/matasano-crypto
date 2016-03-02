@@ -332,7 +332,7 @@ pub fn create_harder_oracle(_mystery: &Vec<u8>, _key: &str) -> Box<Oracle> {
     })
 }
 
-pub fn create_userdata(userdata: &str, key: &str) -> Vec<u8> {
+pub fn create_userdata(iv: &Vec<u8>, userdata: &str, key: &str) -> Vec<u8> {
     let prefix = "comment1=cooking%20MCs;userdata=";
     let suffix = ";comment2=%20like%20a%20pound%20of%20bacon";
 
@@ -351,13 +351,11 @@ pub fn create_userdata(userdata: &str, key: &str) -> Vec<u8> {
 
     let length = data.len();
     let padding = pad_pkcs7(&data, length + (16 - (length % 16)));
-    let iv: Vec<u8> = iter::repeat(0).take(16).collect();
     let encrypted = encrypt_aes_cbc(&iv, &padding, &key);
     encrypted.clone()
 }
 
-pub fn is_admin(profile: &Vec<u8>, key: &str) -> bool {
-    let iv: Vec<u8> = iter::repeat(0).take(16).collect();
+pub fn is_admin(iv: &Vec<u8>, profile: &Vec<u8>, key: &str) -> bool {
     let result = decrypt_aes_cbc(&iv, &profile, &key);
     let profile = raw_to_string(&result);
     let subsets: Vec<&str> = profile.split(';').collect();

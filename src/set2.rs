@@ -37,7 +37,7 @@ fn decrypt_encrypt_cbc() {
 fn decrypt_encrypt_cbc_complex() {
     let key = "YELLOW SUBMARINE";
     let sample = "a test a testing - and now for something significantly longer...";
-    let iv: Vec<u8> = iter::repeat(0).take(16).collect();
+    let iv = random_aes();
     let encrypted = encrypt_aes_cbc(&iv, &string_to_raw(sample), key);
     let decrypted = raw_to_string(&decrypt_aes_cbc(&iv, &encrypted, key));
     assert!(decrypted == sample);
@@ -70,8 +70,8 @@ fn challenge_11() {
 fn challenge_12() {
     let mystery_string = "Um9sbGluJyBpbiBteSA1LjAKV2l0aCBteSByYWctdG9wIGRvd24gc28gbXkgaGFpciBjYW4gYmxvdwpUaGUgZ2lybGllcyBvbiBzdGFuZGJ5IHdhdmluZyBqdXN0IHRvIHNheSBoaQpEaWQgeW91IHN0b3A/IE5vLCBJIGp1c3QgZHJvdmUgYnkK";
     let Base64(mystery) = string_to_base64(&mystery_string);
-    let random_key = raw_to_string(&random_aes());
-    let oracle = create_simple_oracle(&mystery, &random_key);
+    let key = random_string(16);
+    let oracle = create_simple_oracle(&mystery, &key);
     let result = decrypt_ecb(oracle);
     // we may be decrypting past the known string due to the
     // ciphertext being rounded up to the nearest block size.
@@ -139,8 +139,8 @@ fn create_role_admin() {
 fn challenge_14() {
     let mystery_string = "Um9sbGluJyBpbiBteSA1LjAKV2l0aCBteSByYWctdG9wIGRvd24gc28gbXkgaGFpciBjYW4gYmxvdwpUaGUgZ2lybGllcyBvbiBzdGFuZGJ5IHdhdmluZyBqdXN0IHRvIHNheSBoaQpEaWQgeW91IHN0b3A/IE5vLCBJIGp1c3QgZHJvdmUgYnkK";
     let Base64(mystery) = string_to_base64(&mystery_string);
-    let random_key = raw_to_string(&random_aes());
-    let oracle = create_harder_oracle(&mystery, &random_key);
+    let key = random_string(16);
+    let oracle = create_harder_oracle(&mystery, &key);
     let result = decrypt_ecb(oracle);
     // we may be decrypting past the known string due to the
     // ciphertext being rounded up to the nearest block size.
@@ -156,12 +156,30 @@ fn challenge_15() {
 
 #[test]
 fn test_is_admin() {
-    let random_key = raw_to_string(&random_aes());
-    let iv: Vec<u8> = iter::repeat(0).take(16).collect();
-    let legit = "foo=bar;admin=true;bar=baz";
-    let encrypted1 = encrypt_aes_cbc(&iv, &string_to_raw(legit), &random_key);
-    assert!(is_admin(&encrypted1, &random_key[..]) == true);
+    let iv = random_aes();
+    let key = "YELLOW SUBMARINE";
+    let legit = "foo=bar;admin=true;bar=z;padding";
+    let encrypted1 = encrypt_aes_cbc(&iv, &string_to_raw(legit), &key);
+    assert!(is_admin(&iv, &encrypted1, &key) == true);
     let not_legit = "foo=bar;bar=baz";
-    let encrypted2 = encrypt_aes_cbc(&iv, &string_to_raw(not_legit), &random_key);
-    assert!(is_admin(&encrypted2, &random_key[..]) == false);
+    let encrypted2 = encrypt_aes_cbc(&iv, &string_to_raw(not_legit), &key);
+    assert!(is_admin(&iv, &encrypted2, &key) == false);
+}
+
+#[test]
+fn challenge_16() {
+    let iv = random_aes();
+    let key = random_string(16);
+    let repeating: Vec<u8> = iter::repeat('x' as u8).take(32).collect();
+    let mut userdata = create_userdata(&iv, &raw_to_string(&repeating), &key);
+    let mut i = 32;
+    let search = ";admin=true;";
+    for ch in search.chars() {
+        userdata[i] = userdata[i] ^ ('x' as u8) ^ (ch as u8);
+        i += 1;
+    }
+    let decrypted = decrypt_aes_cbc(&iv, &userdata, &key);
+    let result = raw_to_string(&decrypted);
+    assert!(result.contains(search));
+    assert!(is_admin(&iv, &userdata, &key));
 }
