@@ -266,9 +266,22 @@ pub fn decrypt_ecb(oracle: Box<Oracle>) -> String {
     // account for the case where we have no initial padding
     offset = offset % block_size;
 
+    // find the maximum length.
+    let empty_length = oracle(&vec![]).len();
+    let mut max_length = empty_length + block_size - 1;
+    for n in 1.. {
+        let repeating: Vec<u8> = x.clone().take(n).collect();
+        let cipher = oracle(&repeating);
+        if cipher.len() == empty_length {
+            max_length -= 1;
+        } else {
+            break;
+        }
+    }
+
     // decrypt.
     let mut decrypted = vec![];
-    for i in offset.. {
+    for i in offset..max_length {
 
         // which block are we looking at?
         let b = i / block_size;
@@ -276,7 +289,10 @@ pub fn decrypt_ecb(oracle: Box<Oracle>) -> String {
 
         let mut prefix: Vec<u8> = x.clone().take(n as usize).collect();
         let result = &oracle(&prefix);
-        let range = block_size*b..block_size*(b + 1);
+        let start_of_block = block_size * b;
+        let end_of_block = block_size * (b + 1);
+
+        let range = start_of_block..end_of_block;
         let matching = result[range.clone()].to_vec();
         prefix.extend(decrypted.clone());
 
@@ -290,11 +306,8 @@ pub fn decrypt_ecb(oracle: Box<Oracle>) -> String {
             attack.insert(block, ch);
         }
 
-        // keep going until we can't match any more.
-        let block = attack.get(&matching.clone());
-        match block {
-            Some(ch) => decrypted.push(ch.clone()),
-            _ => break
+        if let Some(ch) = attack.get(&matching.clone()) {
+            decrypted.push(ch.clone());
         }
     }
 

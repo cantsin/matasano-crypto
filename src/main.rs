@@ -13,5 +13,5 @@ mod set1;
 mod set2;
 
 fn main() {
-    print!("Nothing to see here.\n");
+    println!("Nothing to see here.");
 }
