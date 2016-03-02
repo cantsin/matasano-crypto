@@ -102,7 +102,7 @@ fn test_profile_for_is_sane() {
 }
 
 #[test]
-fn create_role_admin() {
+fn challenge_13() {
     let padded = pad_pkcs7(&string_to_raw("admin"), 16);
     let profile = "not-a-suspicious-user@foo.com";
 

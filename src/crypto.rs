@@ -325,7 +325,10 @@ pub fn encrypt_profile(profile: &str) -> (String, Vec<u8>) {
 pub fn decrypt_profile(profile: &Vec<u8>, key: &str) -> Vec<(String, String)> {
     let result = decrypt_aes_ecb(&profile, &key);
     let profile = raw_to_string(&result);
-    key_value(&profile)
+    match strip_padding(&profile) {
+        Some(stripped) => key_value(&stripped),
+        None => key_value(&profile)
+    }
 }
 
 pub fn create_harder_oracle(_mystery: &Vec<u8>, _key: &str) -> Box<Oracle> {
